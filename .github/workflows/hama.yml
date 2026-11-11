@@ -1,0 +1,27 @@
+name: Build HAMA firmware
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: espressif/idf:release-v6.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build
+        shell: bash
+        run: |
+          git config --global --add safe.directory '*'
+          . $IDF_PATH/export.sh
+          idf.py --version
+          python3 scripts/build.py --list-boards | grep bread-compact-wifi || true
+          python3 scripts/build.py bread-compact-wifi --name bread-compact-wifi-128x64
+          ls -R releases || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hama-firmware
+          path: |
+            releases/
+            build/*.bin
+          if-no-files-found: warn
